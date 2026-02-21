@@ -7,29 +7,33 @@
     <style>
         :root { --primary: #003399; --success: #25d366; --error: #dc3545; --social: #1877F2; --light: #f8f9fa; }
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #dee2e6; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; width: 100%; max-width: 500px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; }
+        .container { background: white; width: 100%; max-width: 500px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; margin-bottom: 20px; }
         .header { padding: 25px; text-align: center; border-bottom: 2px solid var(--light); background: white; }
         .header img { max-width: 160px; }
         
+        /* Navegación */
         .nav { display: flex; background: #f0f0f0; margin: 15px; border-radius: 15px; padding: 5px; gap: 5px; }
         .nav-btn { flex: 1; border: none; padding: 12px 5px; border-radius: 12px; cursor: pointer; font-weight: bold; color: #777; font-size: 11px; text-transform: uppercase; transition: 0.3s; }
         .nav-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        .content { padding: 25px; display: none; min-height: 300px; }
+        .content { padding: 25px; display: none; min-height: 350px; }
         .content.active { display: block; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         label { font-size: 11px; font-weight: 800; color: #444; text-transform: uppercase; margin-top: 15px; display: block; letter-spacing: 0.5px; }
-        input, textarea, select { width: 100%; padding: 14px; margin-top: 6px; border: 1.5px solid #eee; border-radius: 10px; box-sizing: border-box; background: var(--light); font-size: 15px; transition: 0.3s; }
-        input:focus { border-color: var(--primary); outline: none; background: white; }
+        input, textarea, select { width: 100%; padding: 14px; margin-top: 6px; border: 1.5px solid #eee; border-radius: 10px; box-sizing: border-box; background: var(--light); font-size: 15px; }
         
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 20px; color: white; font-size: 14px; text-transform: uppercase; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 15px; color: white; font-size: 14px; text-transform: uppercase; }
         .btn-primary { background: var(--primary); }
         .btn-social { background: var(--social); }
         .btn-success { background: var(--success); }
         
+        /* Estilos de Ticket para Impresión */
+        .ticket-box { border: 2px solid #eee; padding: 20px; border-radius: 15px; background: white; margin-top: 10px; }
+        .ticket-header { text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; }
+        .folio-grande { font-size: 28px; color: var(--primary); font-weight: 900; display: block; margin: 10px 0; }
+        
         #res-busqueda { display:none; margin-top:20px; padding:20px; background:var(--light); border-radius:12px; border-left: 6px solid var(--primary); }
-        .folio-ticket { font-size: 32px; color: var(--primary); font-weight: 900; display: block; margin: 15px 0; letter-spacing: 2px; }
     </style>
 </head>
 <body>
@@ -45,70 +49,88 @@
     </div>
 
     <div id="tab-staff" class="content">
-        <h3 style="margin:0 0 20px 0; color:var(--primary);">Registro de Garantía</h3>
-        <label>Cliente</label><input type="text" id="s-nombre" placeholder="Nombre completo">
-        <label>WhatsApp (10 dígitos)</label><input type="number" id="s-tel" placeholder="5512345678">
-        <label>Sucursal de venta</label><input type="text" id="s-sucursal" placeholder="Ej. Insurgentes">
-        <label>Modelo de unidad</label><input type="text" id="s-modelo" placeholder="Ej. Evo S2">
-        <label>Falla reportada</label><textarea id="s-obs" rows="3" placeholder="Detalles del problema..."></textarea>
-        <button class="btn btn-primary" onclick="enviarWhatsApp()">Generar y Enviar Link</button>
+        <h3 style="margin:0 0 20px 0; color:var(--primary);">Garantía en Piso</h3>
+        <label>Cliente</label><input type="text" id="s-nombre" placeholder="Nombre">
+        <label>WhatsApp</label><input type="number" id="s-tel" placeholder="10 dígitos">
+        <label>Sucursal</label><input type="text" id="s-sucursal">
+        <label>Modelo</label><input type="text" id="s-modelo">
+        <label>Falla</label><textarea id="s-obs" rows="2"></textarea>
+        <button class="btn btn-primary" onclick="enviarWhatsApp()">Enviar Link al Cliente</button>
     </div>
 
     <div id="tab-social" class="content">
-        <h3 style="margin:0 0 20px 0; color:var(--social);">Control de Redes</h3>
-        <label>Plataforma</label>
-        <select id="soc-plataforma">
-            <option value="Facebook">Facebook</option>
-            <option value="TikTok">TikTok</option>
-            <option value="Google">Google Maps</option>
-            <option value="Instagram">Instagram</option>
-        </select>
-        <label>Link del perfil o publicación</label>
-        <input type="text" id="soc-link" placeholder="https://facebook.com/...">
-        <label>Captura del comentario</label>
-        <textarea id="soc-detalle" rows="4" placeholder="Copia aquí el texto de la queja..."></textarea>
-        <label>Adjuntar Screenshot</label>
-        <input type="file" id="soc-file" accept="image/*">
-        <button class="btn btn-social" id="btn-soc" onclick="registrarRedes()">Registrar en Bitácora</button>
+        <div id="form-social">
+            <h3 style="margin:0 0 20px 0; color:var(--social);">Reporte de Redes</h3>
+            <label>Plataforma</label>
+            <select id="soc-plataforma">
+                <option value="Facebook">Facebook</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Google">Google Maps</option>
+            </select>
+            <label>Link del Post / Usuario</label>
+            <input type="text" id="soc-link" placeholder="URL del comentario">
+            <label>Comentario</label>
+            <textarea id="soc-detalle" rows="3"></textarea>
+            <label>Captura</label>
+            <input type="file" id="soc-file" accept="image/*">
+            <button class="btn btn-social" id="btn-soc" onclick="registrarRedes()">Registrar y Generar Ticket</button>
+        </div>
+
+        <div id="ticket-social" style="display:none;">
+            <div id="print-social" class="ticket-box" style="border-color: var(--social);">
+                <div class="ticket-header" style="border-color: var(--social);">
+                    <img src="https://evobike.com.mx/cdn/shop/files/logo_600x.png?v=1614333552" width="100">
+                    <h4 style="color: var(--social); margin: 5px 0;">ATENCIÓN DIGITAL</h4>
+                </div>
+                <p><strong>Folio:</strong> <span id="ts-folio" class="folio-grande" style="color: var(--social);"></span></p>
+                <p><strong>Red:</strong> <span id="ts-red"></span></p>
+                <p><strong>Fecha:</strong> <span id="ts-fecha"></span></p>
+                <p><strong>Detalle:</strong> <i id="ts-obs"></i></p>
+            </div>
+            <button class="btn btn-primary" onclick="imprimir('print-social')">Descargar PDF</button>
+            <button class="btn btn-success" id="btn-wa-soc" style="background:#25d366;">Enviar a Cliente</button>
+            <button class="btn" onclick="location.reload()" style="color:#666;">Nuevo Registro</button>
+        </div>
     </div>
 
     <div id="tab-consulta" class="content">
-        <h3 style="margin:0 0 20px 0; text-align: center;">Estatus de Servicio</h3>
-        <p style="text-align: center; font-size: 13px; color: #666;">Ingresa tu folio para conocer el avance de tu reporte.</p>
-        <input type="text" id="q-folio" placeholder="EB-0000" style="text-align:center; font-weight:bold; font-size: 20px; text-transform: uppercase;">
-        <button class="btn btn-primary" onclick="buscarStatus()">Consultar ahora</button>
-        
+        <h3 style="text-align: center;">Estatus de Servicio</h3>
+        <input type="text" id="q-folio" placeholder="EB-0000" style="text-align:center; font-weight:bold; text-transform:uppercase;">
+        <button class="btn btn-primary" onclick="buscarStatus()">Consultar</button>
         <div id="res-busqueda">
-            <label>Estatus actual:</label>
-            <div id="r-status" style="font-weight: bold; color: var(--primary); font-size: 18px; margin-bottom: 15px;"></div>
-            <label>Tiempo estimado:</label>
-            <div id="r-tiempo" style="font-weight: bold;"></div>
+            <label>Estatus:</label><div id="r-status" style="font-weight:bold; color:var(--primary);"></div>
+            <label>Avance:</label><div id="r-tiempo"></div>
         </div>
     </div>
 
     <div id="tab-cliente-upload" class="content">
         <div id="area-subida">
-            <h2 id="msg-cliente" style="color:var(--primary); margin-top:0;"></h2>
-            <p>Para completar tu reporte, por favor sube una foto de tu <b>Póliza de Garantía o Nota de Venta</b>.</p>
-            <label>Confirmar Sucursal</label><input type="text" id="c-sucursal">
-            <label style="color:var(--error);">Foto Documento (Requerido)</label>
-            <input type="file" id="c-archivo" accept="image/*">
-            <button class="btn btn-success" id="btn-fin" onclick="finalizarProceso()">Enviar Documentación</button>
+            <h3 id="msg-cliente" style="color:var(--primary);"></h3>
+            <p>Sube foto de tu <b>Póliza o Nota</b> para generar tu folio oficial.</p>
+            <label>Sucursal</label><input type="text" id="c-sucursal">
+            <label>Archivo</label><input type="file" id="c-archivo" accept="image/*">
+            <button class="btn btn-success" id="btn-fin" onclick="finalizarCliente()">Finalizar Reporte</button>
         </div>
         
-        <div id="ticket-container" style="display:none; text-align:center;">
-            <h2 style="color: var(--success);">¡Registro Exitoso!</h2>
-            <p>Guarda tu número de folio para consultas:</p>
-            <span class="folio-ticket" id="t-folio"></span>
-            <div id="t-info" style="text-align:left; font-size:14px; background:#f0f0f0; padding:15px; border-radius:12px;"></div>
-            <button class="btn btn-primary" onclick="window.print()">Imprimir Ticket</button>
+        <div id="ticket-cliente" style="display:none;">
+            <div id="print-cliente" class="ticket-box">
+                <div class="ticket-header">
+                    <img src="https://evobike.com.mx/cdn/shop/files/logo_600x.png?v=1614333552" width="100">
+                    <h4 style="color: var(--primary); margin: 5px 0;">TICKET DE GARANTÍA</h4>
+                </div>
+                <p><strong>Folio:</strong> <span id="tc-folio" class="folio-grande"></span></p>
+                <p><strong>Fecha:</strong> <span id="tc-fecha"></span></p>
+                <p><strong>Cliente:</strong> <span id="tc-nombre"></span></p>
+                <p><strong>Unidad:</strong> <span id="tc-modelo"></span></p>
+            </div>
+            <button class="btn btn-primary" onclick="imprimir('print-cliente')">Guardar PDF</button>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlJo_c-C43AsD1aSDWWWjhbaQ58dnK2dbP5lN-46hzQ37jUK_YVAf_cGgmEmgnHgoK/exec";
-    const PORTAL_URL = window.location.href.split('?')[0]; 
+    const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; // <--- NO OLVIDES CAMBIAR ESTO
+    const PORTAL_URL = window.location.href.split('?')[0];
 
     function showTab(id) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
@@ -117,72 +139,76 @@
         if(document.getElementById('btn-'+id)) document.getElementById('btn-'+id).classList.add('active');
     }
 
-    window.onload = function() {
+    window.onload = () => {
         const p = new URLSearchParams(window.location.search);
         if (p.has('n')) {
             showTab('tab-cliente-upload');
-            document.getElementById('msg-cliente').innerText = "Bienvenido, " + p.get('n');
+            document.getElementById('msg-cliente').innerText = "Hola, " + p.get('n');
             document.getElementById('c-sucursal').value = p.get('s') || "";
         } else if (p.has('staff')) {
-            // Si eres STAFF, activamos el menú y mostramos Sucursal por defecto
             document.getElementById('main-nav').style.display = 'flex';
             showTab('tab-staff');
         } else {
-            // Si eres CUALQUIERA, mostramos solo la consulta pública
             showTab('tab-consulta');
         }
     };
 
+    function imprimir(id) {
+        const win = window.open('', '', 'height=600,width=800');
+        win.document.write('<html><head><title>Ticket EVOBIKE</title><style>body{font-family:sans-serif;padding:30px;}</style></head><body>');
+        win.document.write(document.getElementById(id).innerHTML);
+        win.document.close();
+        win.print();
+    }
+
+    // --- LÓGICA REDES ---
+    async function registrarRedes() {
+        const file = document.getElementById('soc-file').files[0];
+        const btn = document.getElementById('btn-soc');
+        btn.disabled = true; btn.innerText = "Guardando...";
+        
+        const folio = "SOC-" + Math.floor(1000 + Math.random() * 9000);
+        const reader = new FileReader();
+        const send = async (b64) => {
+            const data = {
+                folio, fecha: new Date().toLocaleDateString('es-MX'),
+                nombre: "REDES: " + document.getElementById('soc-plataforma').value,
+                tel: document.getElementById('soc-link').value,
+                status: "REVISIÓN REDES", observaciones: document.getElementById('soc-detalle').value,
+                archivoB64: b64
+            };
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+            
+            document.getElementById('form-social').style.display = 'none';
+            document.getElementById('ticket-social').style.display = 'block';
+            document.getElementById('ts-folio').innerText = folio;
+            document.getElementById('ts-red').innerText = document.getElementById('soc-plataforma').value;
+            document.getElementById('ts-fecha').innerText = data.fecha;
+            document.getElementById('ts-obs').innerText = data.observaciones;
+            document.getElementById('btn-wa-soc').onclick = () => {
+                window.open(`https://wa.me/?text=${encodeURIComponent("EVOBIKE: Reporte registrado. Folio: "+folio)}`);
+            };
+        };
+        if(file) { reader.readAsDataURL(file); reader.onload = () => send(reader.result); } 
+        else { send(""); }
+    }
+
+    // --- LÓGICA SUCURSAL/CLIENTE ---
     function enviarWhatsApp() {
         const n = document.getElementById('s-nombre').value;
         const t = document.getElementById('s-tel').value;
         const s = document.getElementById('s-sucursal').value;
         const m = document.getElementById('s-modelo').value;
         const o = document.getElementById('s-obs').value;
-        if(!n || !t) return alert("Faltan datos");
-
-        const params = new URLSearchParams({ n, t, s, m, o });
-        const link = PORTAL_URL + "?" + params.toString();
-        const msg = `🚲 *EVOBIKE MÉXICO*\n\nHola *${n}*, para la generacion de tu reporte favor de adjuntar tu póliza en el siguiente enlace:\n${link}`;
-        window.open(`https://wa.me/52${t}?text=${encodeURIComponent(msg)}`, '_blank');
+        const link = PORTAL_URL + "?" + new URLSearchParams({ n, t, s, m, o }).toString();
+        window.open(`https://wa.me/52${t}?text=${encodeURIComponent("EVOBIKE: Por favor adjunta tu póliza aquí: "+link)}`);
     }
 
-    function registrarRedes() {
-        const file = document.getElementById('soc-file').files[0];
-        const btn = document.getElementById('btn-soc');
-        const detalle = document.getElementById('soc-detalle').value;
-        if(!detalle) return alert("Describe el reporte.");
-        btn.disabled = true; btn.innerText = "Registrando...";
-
-        const reader = new FileReader();
-        if(file) {
-            reader.readAsDataURL(file);
-            reader.onload = () => enviarServidorSocial(reader.result);
-        } else {
-            enviarServidorSocial("");
-        }
-    }
-
-    async function enviarServidorSocial(b64) {
-        const data = {
-            folio: "SOC-" + Math.floor(1000 + Math.random() * 9000),
-            fecha: new Date().toLocaleDateString('es-MX'),
-            nombre: "REDES: " + document.getElementById('soc-plataforma').value,
-            tel: document.getElementById('soc-link').value,
-            status: "REVISIÓN REDES",
-            observaciones: document.getElementById('soc-detalle').value,
-            archivoB64: b64
-        };
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-        alert("Guardado. Folio: " + data.folio);
-        location.reload();
-    }
-
-    function finalizarProceso() {
+    async function finalizarCliente() {
         const file = document.getElementById('c-archivo').files[0];
-        if(!file) return alert("Archivo obligatorio");
+        if(!file) return alert("Sube la foto");
         const btn = document.getElementById('btn-fin');
-        btn.disabled = true; 
+        btn.disabled = true;
         const p = new URLSearchParams(window.location.search);
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -195,23 +221,22 @@
             };
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
             document.getElementById('area-subida').style.display = 'none';
-            document.getElementById('ticket-container').style.display = 'block';
-            document.getElementById('t-folio').innerText = folio;
-            document.getElementById('t-info').innerText = `Unidad: ${data.modelo}\nFecha: ${data.fecha}`;
+            document.getElementById('ticket-cliente').style.display = 'block';
+            document.getElementById('tc-folio').innerText = folio;
+            document.getElementById('tc-fecha').innerText = data.fecha;
+            document.getElementById('tc-nombre').innerText = data.nombre;
+            document.getElementById('tc-modelo').innerText = data.modelo;
         };
     }
 
     async function buscarStatus() {
         const f = document.getElementById('q-folio').value.toUpperCase();
-        if(!f) return;
-        try {
-            const r = await fetch(SCRIPT_URL + "?folio=" + f);
-            const d = await r.json();
-            if(d.error) return alert("No encontrado");
-            document.getElementById('res-busqueda').style.display = "block";
-            document.getElementById('r-status').innerText = d.status;
-            document.getElementById('r-tiempo').innerText = d.tiempo || "En revisión";
-        } catch(e) { alert("Error."); }
+        const r = await fetch(SCRIPT_URL + "?folio=" + f);
+        const d = await r.json();
+        if(d.error) return alert("No encontrado");
+        document.getElementById('res-busqueda').style.display = "block";
+        document.getElementById('r-status').innerText = d.status;
+        document.getElementById('r-tiempo').innerText = d.tiempo || "En proceso";
     }
 </script>
 </body>
