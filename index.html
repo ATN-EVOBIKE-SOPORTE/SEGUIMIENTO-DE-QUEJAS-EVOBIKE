@@ -38,7 +38,33 @@
         
         /* Dashboard */
         .chart-container { position: relative; height: 250px; width: 100%; margin-top: 20px; }
+        .chart-container-horizontal { position: relative; height: 300px; width: 100%; margin-top: 20px; }
         .stat-card { background: var(--light); padding: 15px; border-radius: 12px; margin-bottom: 10px; text-align: center; }
+
+        /* Tarjeta destacada de sucursal líder */
+        .leader-card {
+            background: linear-gradient(135deg, #003399, #1877F2);
+            color: white;
+            padding: 18px;
+            border-radius: 14px;
+            margin-top: 16px;
+            margin-bottom: 4px;
+            display: none;
+        }
+        .leader-card .leader-label { font-size: 10px; font-weight: 800; letter-spacing: 1px; opacity: 0.8; text-transform: uppercase; }
+        .leader-card .leader-name { font-size: 22px; font-weight: 900; margin: 4px 0 2px; }
+        .leader-card .leader-count { font-size: 13px; opacity: 0.85; }
+        .section-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 24px;
+            display: block;
+            border-left: 4px solid var(--social);
+            padding-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -74,6 +100,11 @@
                 <option value="Instagram">Instagram</option>
                 <option value="Google">Google Maps</option>
             </select>
+
+            <!-- ✅ NUEVO CAMPO: Sucursal en formulario de Redes -->
+            <label>Sucursal relacionada</label>
+            <input type="text" id="soc-sucursal" placeholder="Ej. CDMX Centro, Monterrey...">
+
             <label>Link del Post / Usuario</label>
             <input type="text" id="soc-link" placeholder="URL del comentario">
             <label>Comentario</label>
@@ -91,6 +122,7 @@
                 </div>
                 <p><strong>Folio:</strong> <span id="ts-folio" class="folio-grande" style="color: var(--social);"></span></p>
                 <p><strong>Red:</strong> <span id="ts-red"></span></p>
+                <p><strong>Sucursal:</strong> <span id="ts-sucursal"></span></p>
                 <p><strong>Fecha:</strong> <span id="ts-fecha"></span></p>
                 <p><strong>Detalle:</strong> <i id="ts-obs"></i></p>
             </div>
@@ -103,7 +135,7 @@
     <div id="tab-dash" class="content">
         <h3 style="color:var(--accent); text-align: center;">Análisis de Quejas</h3>
         <div class="stat-card">
-            <label>Total de Reportes (Hoy)</label>
+            <label>Total de Reportes (Acumulado)</label>
             <div id="total-count" style="font-size: 24px; font-weight: bold; color: var(--primary);">0</div>
         </div>
         
@@ -112,10 +144,25 @@
             <canvas id="chartSocial"></canvas>
         </div>
 
-        <label>Quejas por Sucursal</label>
+        <!-- ✅ NUEVA SECCIÓN: Quejas de Redes por Sucursal -->
+        <span class="section-title">📣 Quejas de Redes por Sucursal</span>
+
+        <!-- Tarjeta de sucursal líder -->
+        <div class="leader-card" id="leader-card">
+            <div class="leader-label">⚠️ Mayor número de quejas en redes</div>
+            <div class="leader-name" id="leader-name">—</div>
+            <div class="leader-count" id="leader-count"></div>
+        </div>
+
+        <div class="chart-container-horizontal">
+            <canvas id="chartSucursalSocial"></canvas>
+        </div>
+
+        <label style="margin-top: 24px;">Quejas Totales por Sucursal</label>
         <div class="chart-container">
             <canvas id="chartSucursal"></canvas>
         </div>
+
         <button class="btn btn-accent" onclick="resetStats()" style="margin-top: 30px; opacity: 0.6; font-size: 10px; padding: 10px;">Limpiar Estadísticas Locales</button>
     </div>
 
@@ -151,11 +198,22 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzMp3KeldO6HfKqmGBAVa9nq2gDLmA_113TPhNay4exTUXMKUjl4uKOwWVI26unCI/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybzOCjbcSsVpHlm-gCdRLWepM3F8_TPP04pc4I7eetL0mBWXgTCUx9-wHjQ-2Keyx9/exec";
     const PORTAL_URL = window.location.href.split('?')[0];
 
     // --- LÓGICA DE ESTADÍSTICAS ---
-    let stats = JSON.parse(localStorage.getItem('evobike_stats')) || { social: {}, sucursal: {}, total: 0 };
+    // stats.social        → quejas por plataforma (Facebook, TikTok, etc.)
+    // stats.sucursal      → quejas totales por sucursal (cliente físico)
+    // stats.sucursalSocial → quejas de REDES por sucursal ← NUEVO
+    let stats = JSON.parse(localStorage.getItem('evobike_stats')) || {
+        social: {},
+        sucursal: {},
+        sucursalSocial: {},   // ← NUEVO
+        total: 0
+    };
+
+    // Migración: si no existe el campo nuevo, lo inicializamos
+    if (!stats.sucursalSocial) stats.sucursalSocial = {};
 
     function saveStat(type, key) {
         if (!key) key = "Desconocido";
@@ -171,17 +229,20 @@
         }
     }
 
-    let chartSocial, chartSucursal;
+    let chartSocial, chartSucursal, chartSucursalSocial;
 
     function updateCharts() {
         document.getElementById('total-count').innerText = stats.total;
         
-        const ctxSocial = document.getElementById('chartSocial').getContext('2d');
-        const ctxSucursal = document.getElementById('chartSucursal').getContext('2d');
+        const ctxSocial          = document.getElementById('chartSocial').getContext('2d');
+        const ctxSucursal        = document.getElementById('chartSucursal').getContext('2d');
+        const ctxSucursalSocial  = document.getElementById('chartSucursalSocial').getContext('2d');
 
-        if (chartSocial) chartSocial.destroy();
-        if (chartSucursal) chartSucursal.destroy();
+        if (chartSocial)         chartSocial.destroy();
+        if (chartSucursal)       chartSucursal.destroy();
+        if (chartSucursalSocial) chartSucursalSocial.destroy();
 
+        // Gráfica 1: Quejas por plataforma (doughnut, sin cambios)
         chartSocial = new Chart(ctxSocial, {
             type: 'doughnut',
             data: {
@@ -194,17 +255,85 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
+        // ✅ Gráfica 2 NUEVA: Quejas de REDES por Sucursal — barra horizontal
+        const socSucLabels = Object.keys(stats.sucursalSocial);
+        const socSucValues = Object.values(stats.sucursalSocial);
+
+        // Ordenar de mayor a menor para facilitar lectura
+        const socSucPairs = socSucLabels.map((l, i) => ({ label: l, value: socSucValues[i] }))
+                                        .sort((a, b) => b.value - a.value);
+
+        // Mostrar tarjeta de líder
+        const leaderCard = document.getElementById('leader-card');
+        if (socSucPairs.length > 0) {
+            const leader = socSucPairs[0];
+            leaderCard.style.display = 'block';
+            document.getElementById('leader-name').innerText = leader.label;
+            document.getElementById('leader-count').innerText =
+                leader.value + ' queja' + (leader.value !== 1 ? 's' : '') + ' en redes sociales';
+        } else {
+            leaderCard.style.display = 'none';
+        }
+
+        // Colores: el primero (líder) en rojo, el resto en azul degradado
+        const barColors = socSucPairs.map((_, i) =>
+            i === 0 ? '#dc3545' : `rgba(24, 119, 242, ${1 - i * 0.12})`
+        );
+
+        chartSucursalSocial = new Chart(ctxSucursalSocial, {
+            type: 'bar',
+            data: {
+                labels: socSucPairs.map(p => p.label),
+                datasets: [{
+                    label: 'Quejas en redes',
+                    data: socSucPairs.map(p => p.value),
+                    backgroundColor: barColors,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',   // ← barra HORIZONTAL
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.x} queja${ctx.parsed.x !== 1 ? 's' : ''}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y: {
+                        ticks: { font: { weight: 'bold' } }
+                    }
+                }
+            }
+        });
+
+        // Gráfica 3: Quejas TOTALES por sucursal (barra vertical, sin cambios)
         chartSucursal = new Chart(ctxSucursal, {
             type: 'bar',
             data: {
                 labels: Object.keys(stats.sucursal),
                 datasets: [{
-                    label: 'Quejas',
+                    label: 'Quejas totales',
                     data: Object.values(stats.sucursal),
-                    backgroundColor: '#003399'
+                    backgroundColor: '#003399',
+                    borderRadius: 6
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
         });
     }
 
@@ -240,31 +369,38 @@
 
     // --- REGISTRO REDES ---
     async function registrarRedes() {
-        const platform = document.getElementById('soc-plataforma').value;
-        const file = document.getElementById('soc-file').files[0];
-        const btn = document.getElementById('btn-soc');
-        btn.disabled = true; btn.innerText = "Guardando...";
+        const platform  = document.getElementById('soc-plataforma').value;
+        const sucursal  = document.getElementById('soc-sucursal').value.trim(); // ✅ NUEVO
+        const file      = document.getElementById('soc-file').files[0];
+        const btn       = document.getElementById('btn-soc');
+        btn.disabled    = true;
+        btn.innerText   = "Guardando...";
         
-        saveStat('social', platform); // Guardar estadística
+        saveStat('social', platform);                        // queja por plataforma
+        if (sucursal) saveStat('sucursalSocial', sucursal);  // ✅ queja de redes por sucursal
 
         const folio = "SOC-" + Math.floor(1000 + Math.random() * 9000);
         const reader = new FileReader();
         const send = async (b64) => {
             const data = {
-                folio, fecha: new Date().toLocaleDateString('es-MX'),
+                folio,
+                fecha: new Date().toLocaleDateString('es-MX'),
                 nombre: "REDES: " + platform,
+                sucursal: sucursal || "No especificada",
                 tel: document.getElementById('soc-link').value,
-                status: "REVISIÓN REDES", observaciones: document.getElementById('soc-detalle').value,
+                status: "REVISIÓN REDES",
+                observaciones: document.getElementById('soc-detalle').value,
                 archivoB64: b64
             };
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
             
             document.getElementById('form-social').style.display = 'none';
             document.getElementById('ticket-social').style.display = 'block';
-            document.getElementById('ts-folio').innerText = folio;
-            document.getElementById('ts-red').innerText = platform;
-            document.getElementById('ts-fecha').innerText = data.fecha;
-            document.getElementById('ts-obs').innerText = data.observaciones;
+            document.getElementById('ts-folio').innerText    = folio;
+            document.getElementById('ts-red').innerText      = platform;
+            document.getElementById('ts-sucursal').innerText = sucursal || "No especificada"; // ✅ NUEVO
+            document.getElementById('ts-fecha').innerText    = data.fecha;
+            document.getElementById('ts-obs').innerText      = data.observaciones;
             document.getElementById('btn-wa-soc').onclick = () => {
                 window.open(`https://wa.me/?text=${encodeURIComponent("EVOBIKE: Reporte registrado. Folio: "+folio)}`);
             };
@@ -291,7 +427,7 @@
         const suc = document.getElementById('c-sucursal').value;
         btn.disabled = true;
         
-        saveStat('sucursal', suc); // Guardar estadística
+        saveStat('sucursal', suc);
 
         const p = new URLSearchParams(window.location.search);
         const reader = new FileReader();
@@ -306,8 +442,8 @@
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
             document.getElementById('area-subida').style.display = 'none';
             document.getElementById('ticket-cliente').style.display = 'block';
-            document.getElementById('tc-folio').innerText = folio;
-            document.getElementById('tc-fecha').innerText = data.fecha;
+            document.getElementById('tc-folio').innerText  = folio;
+            document.getElementById('tc-fecha').innerText  = data.fecha;
             document.getElementById('tc-nombre').innerText = data.nombre;
             document.getElementById('tc-modelo').innerText = data.modelo;
         };
@@ -321,13 +457,10 @@
             const d = await r.json();
             if(d.error) return alert("No encontrado");
             document.getElementById('res-busqueda').style.display = "block";
-            document.getElementById('r-status').innerText = d.status;
-            document.getElementById('r-tiempo').innerText = d.tiempo || "En proceso";
+            document.getElementById('r-status').innerText  = d.status;
+            document.getElementById('r-tiempo').innerText  = d.tiempo || "En proceso";
         } catch(e) { alert("Error al consultar"); }
     }
 </script>
 </body>
 </html>
-
-
-
